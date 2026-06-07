@@ -11,7 +11,7 @@ An intelligent customer support system built with **LangGraph**, **RAG (Retrieva
 
 ## 📸 Demo
 
-![App Screenshot](screenshot.png)
+<img width="1606" height="895" alt="Screenshot (636)" src="https://github.com/user-attachments/assets/38872e19-2b5e-4ccf-b2f5-c0f75f63a54b" />
 
 ---
 
