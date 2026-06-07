@@ -1,0 +1,135 @@
+"""FAQ Retriever using ChromaDB and HuggingFace embeddings."""
+ 
+import os
+from typing import List
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_community.vectorstores import Chroma
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_core.documents import Document
+ 
+ 
+class FAQRetriever:
+    """Retrieves relevant FAQ content based on user questions."""
+ 
+    def __init__(self, category: str = "general"):
+        """
+        Setup the retriever for a specific FAQ category.
+ 
+        category: 'general' or 'billing'
+        """
+        self.category = category.lower()
+ 
+        # Find where our files are stored
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ 
+        # Choose the right PDF file and database folder
+        if self.category == "billing":
+            pdf_file = "billing_faq.pdf"
+            db_folder = "vectorstore_billing"
+        else:  # general
+            pdf_file = "general_issues_faq.pdf"
+            db_folder = "vectorstore_general"
+ 
+        # Set full paths
+        self.pdf_path = os.path.join(project_root, "data", pdf_file)
+        self.database_path = os.path.join(project_root, "data", db_folder)
+ 
+        # Step 1: Load the embeddings model (converts text to numbers)
+        print("Loading AI model to understand text...")
+        self.embeddings = HuggingFaceEmbeddings(
+            model_name="sentence-transformers/all-MiniLM-L6-v2"
+        )
+ 
+        # Step 2: Load or create the vector database
+        self.load_or_create_database()
+ 
+    def load_or_create_database(self):
+        """Load existing database or create a new one from PDF."""
+ 
+        if os.path.exists(self.database_path) and os.listdir(self.database_path):
+            print(f"Loading {self.category} FAQ database...")
+            self.vectorstore = Chroma(
+                persist_directory=self.database_path,
+                embedding_function=self.embeddings,
+            )
+            print("Database loaded!")
+        else:
+            print(f"Creating new {self.category} FAQ database...")
+            self.create_database_from_pdf()
+ 
+    def create_database_from_pdf(self):
+        """Build a new searchable database from the FAQ PDF."""
+ 
+        # Step 1: Load the PDF file
+        print(f"Reading PDF: {self.pdf_path}")
+        loader = PyPDFLoader(self.pdf_path)
+        documents = loader.load()
+        print(f"Loaded {len(documents)} pages")
+ 
+        # Step 2: Split into smaller chunks (easier to search)
+        splitter = RecursiveCharacterTextSplitter(
+            chunk_size=1000,
+            chunk_overlap=200,
+            separators=["\n\n", "\n", " ", ""],
+        )
+        chunks = splitter.split_documents(documents)
+        print(f"Split into {len(chunks)} searchable chunks")
+ 
+        # Step 3: Create vector database from chunks
+        print("Building searchable database...")
+        self.vectorstore = Chroma.from_documents(
+            documents=chunks,
+            embedding=self.embeddings,
+            persist_directory=self.database_path,
+        )
+        print("Database created and saved!")
+ 
+    def search(self, question: str, num_results: int = 3) -> List[Document]:
+        """
+        Find the most relevant FAQ content for a question.
+ 
+        question: User's question
+        num_results: How many relevant chunks to return (default: 3)
+ 
+        Returns: List of relevant FAQ chunks
+        """
+        results = self.vectorstore.similarity_search(question, k=num_results)
+        return results
+ 
+    def format_results(self, documents: List[Document]) -> str:
+        """
+        Combine multiple FAQ chunks into one readable text.
+ 
+        Returns: Formatted text ready to send to the AI
+        """
+        if not documents:
+            return "No relevant information found in FAQ."
+ 
+        formatted = []
+        for i, doc in enumerate(documents, 1):
+            formatted.append(f"[FAQ Section {i}]\n{doc.page_content}")
+ 
+        return "\n\n".join(formatted)
+ 
+ 
+# Cache to store one retriever per category (avoids reloading)
+_cached_retrievers = {}
+ 
+ 
+def get_faq_retriever(category: str = "general") -> FAQRetriever:
+    """
+    Get the FAQ retriever for a category.
+    Returns cached version if already loaded.
+ 
+    category: 'general' or 'billing'
+    """
+    global _cached_retrievers
+ 
+    category = category.lower()
+ 
+    if category not in _cached_retrievers:
+        _cached_retrievers[category] = FAQRetriever(category=category)
+ 
+    return _cached_retrievers[category]
+ 
