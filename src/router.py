@@ -17,9 +17,7 @@ def route_query(state: State) -> str:
     category = state["category"].strip()
     
     # Route based on category (FAQ will answer regardless of sentiment)
-    if "technical" in category.lower():
-        return "handle_technical"
-    elif "billing" in category.lower():
+    if "billing" in category.lower():
         return "handle_billing"
     else:
         return "handle_general"

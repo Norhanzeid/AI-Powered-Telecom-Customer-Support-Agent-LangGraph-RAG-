@@ -11,7 +11,7 @@ except Exception as e:
     st.error(f"Failed to load support system: {e}")
     st.stop()
 
-st.title("Customer Support System")
+st.title("Telecom Customer Support Agent")
 
 if "history" not in st.session_state:
     st.session_state.history = []

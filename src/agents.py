@@ -57,30 +57,6 @@ def analyze_sentiment(state: State) -> State:
     sentiment = chain.invoke({"query": state["query"]}).content.strip()
     return {"sentiment": sentiment}
 
-    
-def handle_technical(state: State) -> State:
-    """
-    Handle technical support queries.
-    
-    Args:
-        state: Current state containing the query
-        
-    Returns:
-        Updated state with technical response
-    """
-    prompt = ChatPromptTemplate.from_template(
-        "Provide a technical response to the following customer query: {query}"
-    )
-    chain = prompt | llm
-    response = chain.invoke({"query": state["query"]}).content
-    
-    # Add escalation note if sentiment is negative
-    sentiment = state.get("sentiment", "").strip().lower()
-    if "negative" in sentiment:
-        response += "\n\n Note: Due to the urgency of your concern, a human agent will follow up with you shortly."
-    
-    return {"response": response}
-
 
 def handle_billing(state: State) -> State:
     """
