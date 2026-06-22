@@ -10,11 +10,19 @@ import markdown2
 
 
 def markdown_to_pdf(md_file: str, pdf_file: str):
-    """Convert a markdown file to PDF."""
-    
-    # Read markdown file
-    with open(md_file, 'r', encoding='utf-8') as f:
-        md_content = f.read()
+    """Convert a markdown file to PDF.
+
+    Raises:
+        FileNotFoundError: If the markdown file does not exist.
+        RuntimeError: If PDF generation fails.
+    """
+    try:
+        with open(md_file, 'r', encoding='utf-8') as f:
+            md_content = f.read()
+    except FileNotFoundError:
+        raise FileNotFoundError(f"Markdown file not found: {md_file}")
+    except OSError as exc:
+        raise RuntimeError(f"Cannot read {md_file}: {exc}") from exc
     
     # Convert markdown to HTML
     html_content = markdown2.markdown(md_content)
@@ -70,8 +78,11 @@ def markdown_to_pdf(md_file: str, pdf_file: str):
             elements.append(Spacer(1, 0.1*inch))
     
     # Build PDF
-    doc.build(elements)
-    print(f"✓ Created {pdf_file}")
+    try:
+        doc.build(elements)
+    except Exception as exc:
+        raise RuntimeError(f"Failed to build PDF {pdf_file}: {exc}") from exc
+    print(f"Created {pdf_file}")
 
 
 def main():

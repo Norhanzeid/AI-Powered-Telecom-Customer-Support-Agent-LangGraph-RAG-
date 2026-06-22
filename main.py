@@ -1,6 +1,5 @@
 """Main application entry point for the Customer Support System."""
 
-import sys
 from src.utils import run_customer_support, print_result
 
 
