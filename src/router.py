@@ -1,23 +1,29 @@
 """Routing logic for the customer support workflow."""
 
+import logging
+
 from src.state import State
+
+logger = logging.getLogger(__name__)
 
 
 def route_query(state: State) -> str:
-    """
-    Route the query based on category.
-    All queries get FAQ answers, regardless of sentiment.
-    
-    Args:
-        state: Current state containing sentiment and category
-        
+    """Route the query to the appropriate handler based on category.
+
     Returns:
-        Name of the next node to execute
+        Name of the next node to execute.
+
+    Raises:
+        RuntimeError: If the category is missing from state.
     """
-    category = state["category"].strip()
-    
-    # Route based on category (FAQ will answer regardless of sentiment)
-    if "billing" in category.lower():
+    category = state.get("category")
+    if not category:
+        raise RuntimeError(
+            "Cannot route query: category was not set by the categorize step. "
+            "The LLM may have failed to classify the query."
+        )
+
+    category = category.strip().lower()
+    if "billing" in category:
         return "handle_billing"
-    else:
-        return "handle_general"
+    return "handle_general"
