@@ -1,12 +1,16 @@
 """Main application entry point for the Customer Support System."""
 
-import sys
+import logging
+
 from src.utils import run_customer_support, print_result
+
+logger = logging.getLogger(__name__)
 
 
 def main():
     """Run the customer support system with example queries."""
-    
+    logging.basicConfig(level=logging.INFO)
+
     # Example queries
     queries = [
         "I can't access my account",
@@ -14,20 +18,21 @@ def main():
         "Where can I find my receipt",
         "This is terrible! I'm very frustrated!"
     ]
-    
+
     print("=" * 70)
     print("Customer Support System - Running Example Queries")
     print("=" * 70)
     print()
-    
+
     for query in queries:
         try:
             result = run_customer_support(query)
             print_result(query, result)
         except Exception as e:
-            print(f"Error processing query '{query}': {e}")
+            logger.exception("Error processing query")
+            print(f"Error processing query '{query}': could not generate a response")
             print()
-    
+
     print("=" * 70)
 
 if __name__ == "__main__":
