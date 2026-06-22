@@ -1,6 +1,7 @@
 """Configuration settings for the Customer Support System."""
 
 import os
+
 import truststore
 from dotenv import load_dotenv
 
@@ -13,23 +14,34 @@ load_dotenv()
 
 class Settings:
     """Application settings."""
-    
-    # Groq API Settings
-    GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
-    MODEL_NAME: str = os.getenv("MODEL_NAME", "llama-3.3-70b-versatile")
-    TEMPERATURE: float = float(os.getenv("TEMPERATURE", "0"))
-    
+
     # Categories
     CATEGORIES = ["Technical", "Billing", "General"]
-    
+
     # Sentiments
     SENTIMENTS = ["Positive", "Negative", "Neutral"]
-    
-    @classmethod
-    def validate(cls) -> bool:
+
+    @property
+    def GROQ_API_KEY(self) -> str:
+        """Retrieve API key from environment at access time (never stored as a class attribute)."""
+        return os.getenv("GROQ_API_KEY", "")
+
+    @property
+    def MODEL_NAME(self) -> str:
+        return os.getenv("MODEL_NAME", "llama-3.3-70b-versatile")
+
+    @property
+    def TEMPERATURE(self) -> float:
+        return float(os.getenv("TEMPERATURE", "0"))
+
+    def validate(self) -> bool:
         """Validate that required settings are present."""
-        if not cls.GROQ_API_KEY:
-            raise ValueError("GROQ_API_KEY is not set in environment variables")
+        if not self.GROQ_API_KEY:
+            raise ValueError(
+                "GROQ_API_KEY is not set. "
+                "Please add it to your .env file or set it as an environment variable."
+            )
         return True
+
 
 settings = Settings()

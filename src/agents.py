@@ -1,9 +1,13 @@
 """Agent nodes for the customer support workflow."""
 
+import logging
+
 from langchain_core.prompts import ChatPromptTemplate
 from src.state import State
 from src.llm import llm
 from src.rag import get_faq_retriever
+
+logger = logging.getLogger(__name__)
 
 
 def categorize(state: State) -> State:
@@ -95,8 +99,7 @@ def handle_billing(state: State) -> State:
         response = chain.invoke({"context": context, "query": query}).content
         
     except Exception as e:
-        # Fallback to non-RAG response if there's an error
-        print(f"Error in Billing RAG retrieval: {e}")
+        logger.exception("Error in Billing RAG retrieval")
         prompt = ChatPromptTemplate.from_template(
             "Provide a billing response to the following customer query: {query}"
         )
@@ -148,8 +151,7 @@ def handle_general(state: State) -> State:
         response = chain.invoke({"context": context, "query": query}).content
         
     except Exception as e:
-        # Fallback to non-RAG response if there's an error
-        print(f"Error in RAG retrieval: {e}")
+        logger.exception("Error in General RAG retrieval")
         prompt = ChatPromptTemplate.from_template(
             "Provide a general response to the following customer query: {query}"
         )
